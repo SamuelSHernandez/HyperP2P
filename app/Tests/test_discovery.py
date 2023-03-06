@@ -1,11 +1,13 @@
 import threading
 import time
 import unittest
+
 from P2P.network import Node
+
 
 class TestDiscovery(unittest.TestCase):
     def test_node_start_stop():
-        node = Node('127.0.0.1', 5000)
+        node = Node("127.0.0.1", 5000)
         node_thread = threading.Thread(target=node.start)
         node_thread.start()
 
@@ -24,10 +26,9 @@ class TestDiscovery(unittest.TestCase):
         # Check if the node has stopped
         assert not node_thread.is_alive()
 
-
     def test_node_connect():
-        node1 = Node('127.0.0.1', 5001)
-        node2 = Node('127.0.0.1', 5002)
+        node1 = Node("127.0.0.1", 5001)
+        node2 = Node("127.0.0.1", 5002)
 
         # Start both nodes
         node1_thread = threading.Thread(target=node1.start)
@@ -39,13 +40,13 @@ class TestDiscovery(unittest.TestCase):
         time.sleep(1)
 
         # Connect node1 to node2
-        node1.connect('127.0.0.1', 5002)
+        node1.connect("127.0.0.1", 5002)
 
         # Give the connection some time to establish
         time.sleep(1)
 
         # Check if node1 has node2 as a peer
-        assert ('127.0.0.1', 5002) in node1.peers
+        assert ("127.0.0.1", 5002) in node1.peers
 
         # Stop both nodes
         node1.socket.close()
@@ -57,6 +58,7 @@ class TestDiscovery(unittest.TestCase):
         # Check if the nodes have stopped
         assert not node1_thread.is_alive()
         assert not node2_thread.is_alive()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,6 +5,19 @@ from .graph import Graph
 
 
 def shortest_path(graph: Graph, start: str, end: str) -> List[str]:
+    """
+    Computes the shortest path between two nodes in a graph using Dijkstra's algorithm.
+
+    :param graph: The graph in which to find the shortest path.
+    :type graph: Graph
+    :param start: The name of the starting node.
+    :type start: str
+    :param end: The name of the ending node.
+    :type end: str
+    :return: A list of node names representing the shortest path between the start and end nodes.
+    :rtype: List[str]
+    """
+
     distances = {node.name: float("inf") for node in graph.nodes}
     distances[start] = 0
     queue = [(0, graph.get_node(start))]

@@ -1,7 +1,8 @@
+import threading
+
 from Hypergraph.algorithms import shortest_path
 from Hypergraph.graph import Graph
-from P2P.network import Node, Discovery
-import threading
+from P2P.network import Discovery, Node
 from Utils.config import IP_ADDRESS_PREFIX, IP_ADDRESS_START_PORT
 
 # create a graph with two nodes and one edge
