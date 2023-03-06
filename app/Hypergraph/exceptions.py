@@ -1,4 +1,14 @@
+"""
+This module provides custom exceptions for the hypergraph module.
+"""
+
 class NodeAlreadyExistsError(Exception):
+    """
+    Exception raised when a node with the same name already exists in the hypergraph.
+
+    :param node_name: The name of the node that already exists.
+    :type node_name: str
+    """
     def __init__(self, node_name):
         self.node_name = node_name
 
@@ -7,6 +17,12 @@ class NodeAlreadyExistsError(Exception):
 
 
 class HyperedgeAlreadyExistsError(Exception):
+    """
+    Exception raised when a hyperedge with the same nodes already exists in the hypergraph.
+
+    :param nodes: The set of nodes that form the hyperedge that already exists.
+    :type nodes: Set[Node]
+    """
     def __init__(self, nodes):
         self.nodes = nodes
 
