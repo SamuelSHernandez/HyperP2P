@@ -1,0 +1,4 @@
+IP_ADDRESS_PREFIX = "127.0.0.1"
+IP_ADDRESS_START_PORT = 5002
+NUM_NODES = 5
+NUM_ITERATIONS = 1  # number of times to update weights
