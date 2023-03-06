@@ -1,7 +1,7 @@
 import unittest
 
-from Hypergraph.edge import Edge
-from Hypergraph.node import Node
+from hypergraph.edge import Edge
+from hypergraph.node import Node
 
 
 class TestEdge(unittest.TestCase):

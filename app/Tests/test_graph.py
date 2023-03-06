@@ -1,7 +1,7 @@
 import unittest
 
-from Hypergraph.exceptions import HyperedgeAlreadyExistsError, NodeAlreadyExistsError
-from Hypergraph.graph import Graph
+from hypergraph.exceptions import HyperedgeAlreadyExistsError, NodeAlreadyExistsError
+from hypergraph.graph import Graph
 
 
 class TestGraph(unittest.TestCase):

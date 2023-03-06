@@ -1,6 +1,6 @@
 import unittest
 
-from Hypergraph.node import Node
+from hypergraph.node import Node
 
 
 class TestNode(unittest.TestCase):

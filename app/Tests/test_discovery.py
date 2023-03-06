@@ -2,7 +2,7 @@ import threading
 import time
 import unittest
 
-from P2P.network import Node
+from p2p.network import Node
 
 
 class TestDiscovery(unittest.TestCase):

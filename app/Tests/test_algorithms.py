@@ -1,7 +1,7 @@
 import unittest
 
-from Hypergraph.algorithms import shortest_path
-from Hypergraph.graph import Graph
+from hypergraph.algorithms import shortest_path
+from hypergraph.graph import Graph
 
 
 class TestAlgorithms(unittest.TestCase):

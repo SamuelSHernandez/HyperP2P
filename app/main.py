@@ -1,9 +1,8 @@
 import threading
 
-from Hypergraph.algorithms import shortest_path
-from Hypergraph.graph import Graph
-from P2P.network import Discovery, Node
-from Utils.config import IP_ADDRESS_PREFIX, IP_ADDRESS_START_PORT
+from hypergraph.algorithms import shortest_path
+from hypergraph.graph import Graph
+
 
 # create a graph with two nodes and one edge
 g = Graph(nodes=["A", "B"], edges=[({"A", "B"}, 1)])
