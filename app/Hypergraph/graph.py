@@ -22,6 +22,7 @@ class Graph:
     :param name: The name of the hypergraph (default is None).
     :type name: str
     """
+
     def __init__(
         self,
         nodes: List[str] = None,

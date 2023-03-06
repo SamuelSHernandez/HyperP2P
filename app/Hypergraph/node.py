@@ -2,6 +2,7 @@
 This module provides classes to represent nodes and edges in a hypergraph.
 """
 
+
 class Node:
     """
     Represents a node in a hypergraph.
@@ -11,6 +12,7 @@ class Node:
     :param weight: The weight of the node (default is 1).
     :type weight: int
     """
+
     def __init__(self, name: str, weight: int = 1, socket=None):
         """
         Represents an edge in a hypergraph.

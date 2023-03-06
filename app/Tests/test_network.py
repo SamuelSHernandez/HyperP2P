@@ -2,15 +2,15 @@ import threading
 import time
 import unittest
 
-from p2p.network import Node
+from p2p.network import Peer
 
 
 class TestNetwork(unittest.TestCase):
     def test_node():
         # Create 3 nodes and connect them to each other
-        node1 = Node("127.0.0.1", 5001)
-        node2 = Node("127.0.0.1", 5002)
-        node3 = Node("127.0.0.1", 5003)
+        node1 = Peer("127.0.0.1", 5001)
+        node2 = Peer("127.0.0.1", 5002)
+        node3 = Peer("127.0.0.1", 5003)
         node1.connect("127.0.0.1", 5002)
         node2.connect("127.0.0.1", 5003)
         node3.connect("127.0.0.1", 5001)

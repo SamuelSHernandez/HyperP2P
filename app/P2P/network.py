@@ -9,11 +9,9 @@ logger = logging.getLogger(__name__)
 
 
 class Discovery:
-    def __init__(self, node):
+    def __init__(self, node, socket):
         self.node = node
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((self.node.ip, self.node.port))
-        self.socket.listen()
+        self.socket = socket
         self.threads = []
 
     def start(self):
@@ -33,10 +31,11 @@ class Discovery:
         client_socket.close()
 
 
-class Node:
+class Peer:
     def __init__(self, ip: str, port: int):
         self.ip = ip
         self.port = port
+        self.name = f"{ip}:{port}"
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.peers = []
         self.message_timestamp = {}
@@ -52,7 +51,7 @@ class Node:
             logger.error(f"Error starting node on {self.ip}:{self.port}: {e}")
             return
 
-        logger.info(f"Node started on {self.ip}:{self.port}")
+        logger.info(f"Node on {self.ip}:{self.port}")
 
         while True:
             client_socket, address = self.socket.accept()
@@ -63,7 +62,6 @@ class Node:
 
     def handle_connection(self, client_socket: socket.socket):
         data = client_socket.recv(1024).decode().strip()
-
         if data.startswith("CONNECT"):
             ip, port = data.split()[1:]
             self.connect(ip, int(port))
