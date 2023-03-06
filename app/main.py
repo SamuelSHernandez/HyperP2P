@@ -15,30 +15,6 @@ logging.basicConfig(filename="main.log", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def main():
-    try:
-        # Create network
-        num_nodes = NUM_NODES
-        message = "This is a longer message!"
-
-        network, peers = create_network(num_nodes)
-        start_peers(peers, network)
-
-        # Send message and measure traversal time
-        start_node = peers[0]  # Choose the first node as the start node
-        target_nodes = peers[1:]  # All other nodes are the target nodes
-        traversal_time = send_message(start_node, target_nodes, message)
-
-        print(f"Traversal time: {traversal_time:.6f}s")
-
-    finally:
-        for node in peers:
-            node.socket.close()
-
-        # Shutdown the logging system
-        logging.shutdown()
-
-
 def create_network(num_nodes):
     """
     Create a P2P network with the specified number of nodes.
@@ -156,32 +132,41 @@ def send_message(start_node, target_nodes, message):
     return total_time, traversal_times
 
 if __name__ == "__main__":
-    # Create network
-    num_nodes = NUM_NODES
-    message = "This is a longer message!"
-    network, peers = create_network(num_nodes)
+    try:
+        # Create network
+        num_nodes = NUM_NODES
+        message = "This is a longer message!"
+        network, peers = create_network(num_nodes)
 
-    # Create routing table
-    routing_table = create_routing_table(network)
+        # Create routing table
+        routing_table = create_routing_table(network)
 
-    # Log routing table
-    logger.info("Routing Table:")
-    for source_node, dest_data in routing_table.items():
-        logger.info(f"{source_node}:")
-        for dest_node, data in dest_data.items():
-            logger.info(
-                f"    {dest_node}: {' -> '.join(data['path'])} (cost={data['cost']})"
-            )
+        # Log routing table
+        logger.info("Routing Table:")
+        for source_node, dest_data in routing_table.items():
+            logger.info(f"{source_node}:")
+            for dest_node, data in dest_data.items():
+                logger.info(
+                    f"    {dest_node}: {' -> '.join(data['path'])} (cost={data['cost']})"
+                )
 
-    # Start peers and discovery service
-    start_peers(peers)
+        # Start peers and discovery service
+        start_peers(peers)
 
-    # Send message and measure traversal time
-    start_node = peers[0]  # Choose the first node as the start node
-    target_nodes = peers[1:]  # All other nodes are the target nodes
+        # Send message and measure traversal time
+        start_node = peers[0]  # Choose the first node as the start node
+        target_nodes = peers[1:]  # All other nodes are the target nodes
 
-    traversal_time = send_message(start_node, target_nodes, message)
-    logger.info(f"Total traversal time: {traversal_time:.6f}s")
+        traversal_time = send_message(start_node, target_nodes, message)[0]
+        logger.info(f"Total traversal time: {traversal_time:.6f}s")
 
-    # Shutdown the logging system
-    logging.shutdown()
+        # Shutdown the logging system
+        logging.shutdown()
+
+    finally:
+        print('flag')
+        # for node in peers:
+        #     node.socket.close()
+
+        # Shutdown the logging system
+        logging.shutdown()
