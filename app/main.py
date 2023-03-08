@@ -2,44 +2,38 @@ import logging
 import random
 import threading
 import time
-import socket
-
-from hypergraph.exceptions import HyperedgeAlreadyExistsError
-from hypergraph.graph import Graph
-from p2p.network import Discovery, Peer
-from utils.config import IP_ADDRESS_PREFIX, IP_ADDRESS_START_PORT, NUM_NODES
+import sys
 from hypergraph.algorithms import shortest_path
-
-# Configure logging
-logging.basicConfig(filename="main.log", level=logging.INFO)
-logger = logging.getLogger(__name__)
+from hypergraph.graph import Graph
+from p2p.network import Peer
+from utils import config
 
 
 def create_network(num_nodes):
-    """
-    Create a P2P network with the specified number of nodes.
+    # Set random seed for reproducibility
+    random.seed(492)
 
-    :param num_nodes: The number of nodes in the network.
-    :return: The network and the list of peer objects.
-    """
+    # Create network
     network = Graph(name="My P2P Network")
-    peers = [Peer(IP_ADDRESS_PREFIX, IP_ADDRESS_START_PORT + i) for i in range(num_nodes)]
-
     for i in range(num_nodes):
-        network.add_node(peers[i].name)
-
+        network.add_node(
+            f"{config.IP_ADDRESS_PREFIX}:{config.IP_ADDRESS_START_PORT+i}")
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
             if random.randint(0, 1) == 1:  # randomly add edges with 50% probability
-                try:
-                    network.add_edge({peers[i].name, peers[j].name}, weight=1)
-                except HyperedgeAlreadyExistsError as e:
-                    logger.warning(f"Error adding edge between nodes {i} and {j}: {e}")
+                network.add_edge(
+                    {
+                        f"{config.IP_ADDRESS_PREFIX}:{config.IP_ADDRESS_START_PORT+i}",
+                        f"{config.IP_ADDRESS_PREFIX}:{config.IP_ADDRESS_START_PORT+j}",
+                    },
+                    weight=1,
+                )
 
-    return network, peers
+    return network
 
 
 def create_routing_table(network):
+    # Create routing table
     routing_table = {}
     for node1 in network.nodes:
         routing_table[node1.name] = {}
@@ -57,116 +51,116 @@ def create_routing_table(network):
                 )
                 routing_table[node1.name][node2.name] = {
                     "path": path,
-                    "cost": cost,
+                    "cost": cost+1,
                 }
+
     return routing_table
 
-def start_peers(peers):
-    # Start peers and discovery service
-    threads = [threading.Thread(target=node.start) for node in peers]
+
+def start_nodes(network):
+    # Create nodes and start threads
+    nodes = [
+        Peer(node.name.split(":")[0], int(node.name.split(":")[1]), [])
+        for node in network.nodes
+    ]
+    threads = [threading.Thread(target=node.start) for node in nodes]
     for t in threads:
         t.start()
 
-    # Start discovery service
-    discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    discovery_socket.bind((peers[0].ip, peers[0].port))
-    discovery_socket.listen()
-    discovery = Discovery(discovery_socket, peers[0])
-    discovery_thread = threading.Thread(target=discovery.start)
-    discovery_thread.start()
+    return nodes, threads
 
-    for i in range(len(peers)):
-        for j in range(i + 1, len(peers)):
+
+def connect_peers(nodes, logger):
+    # Connect nodes
+    num_nodes = len(nodes)
+    for i in range(num_nodes):
+        for j in range(i + 1, num_nodes):
             try:
-                peers[i].connect(peers[j].ip, peers[j].port)
-                peers[j].connect(peers[i].ip, peers[i].port)
+                nodes[i].connect(nodes[j].ip, nodes[j].port)
+                nodes[j].connect(nodes[i].ip, nodes[i].port)
             except OSError as e:
                 logger.warning(f"Error connecting nodes {i} and {j}: {e}")
 
-def send_message(start_node, target_nodes, message):
-    """
-    Send a message to the target nodes and measure the time it takes to traverse the network.
 
-    :param start_node: The starting node.
-    :param target_nodes: A list of target nodes.
-    :param message: The message to send.
-    :return: The time it took to traverse the network.
-    """
-    start_time = time.time()
-    message_with_timestamp = f"{message}, timestamp={start_time}"
+def send_messages(nodes, message, logger, start_time):
+    # Send message and measure traversal time
+    start_node = nodes[0]  # Choose the first node as the start node
+    target_nodes = nodes[1:]  # All other nodes are the target nodes
+    traversal_time = 0
 
-    # Increment messages_sent counter
-    with start_node.lock:
-        start_node.messages_sent += 1
+    for node in target_nodes:
+        start_node.send_message(f"{message}")
+        logger.info(
+            f"Sent message from {start_node.ip}:{start_node.port} to {node.ip}:{node.port}"
+        )
+        while not node.message_timestamp:  # Wait for the message to arrive
+            if time.time() - start_time > 10:  # Add timeout of 10 seconds
+                logger.error(f"Message not received by {node.ip}:{node.port}")
+                break
+        if node.message_timestamp:
+            logger.info(f"Message received by {node.ip}:{node.port}")
+            if 0 in node.message_timestamp:
+                # Remove the message from the node's message queue
+                node.message_timestamp.pop(0)
+            else:
+                logger.error(
+                    f"Key 0 not found in message_timestamp for {node.ip}:{node.port}"
+                )
+            end_time = time.time()
 
-    for peer in start_node.peers:
-        try:
-            # Create a socket to connect to the peer
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((peer.ip, peer.port))
-                s.sendall(message_with_timestamp.encode("utf-8"))
+            # Calculate traversal time
+            traversal_time = end_time - start_time
+            logger.info(f"Traversal time: {traversal_time:.6f}s")
+            break  # Exit the loop once we get the traversal time
 
-        except ConnectionRefusedError:
-            start_node.logger.warning(f"Connection refused by {peer.ip}:{peer.port}")
+        # Return traversal time if it is not zero
+        if traversal_time > 0:
+            return traversal_time
 
-        except OSError as e:
-            start_node.logger.warning(
-                f"Error sending message to {peer.ip}:{peer.port}: {e}"
+    # Return traversal time even if it is zero
+    return traversal_time
+
+
+def run():
+    # Configure logging
+    logging.basicConfig(filename="main.log", level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    # Create network
+    num_nodes = config.NUM_NODES
+    network = create_network(num_nodes)
+
+    # Create routing table
+    routing_table = create_routing_table(network)
+
+    # Log routing table
+    logger.info("Routing Table:")
+    for source_node, dest_data in routing_table.items():
+        logger.info(f"{source_node}:")
+        for dest_node, data in dest_data.items():
+            logger.info(
+                f"    {dest_node}: {' -> '.join(data['path'])} (cost={data['cost']})"
             )
 
-    # Wait for messages to arrive at the target nodes
-    time.sleep(1)
+    # Create nodes and start threads
+    nodes, threads = start_nodes(network)
 
-    # Measure the time it took for the message to traverse the network
-    traversal_times = []
-    for target_node in target_nodes:
-        with target_node.lock:
-            if message in target_node.message_timestamp:
-                for (peer, timestamp) in target_node.message_timestamp[message]:
-                    traversal_time = time.time() - timestamp
-                    traversal_times.append(traversal_time)
+    # Connect nodes
+    connect_peers(nodes, logger)
 
-    end_time = time.time()
-    total_time = end_time - start_time
+    # Send message and measure traversal time
+    message = "Hello world!"
+    start_time = time.time()
+    traversal_time = send_messages(nodes, message, logger, start_time)
+    print(f'\nTraversal time: {traversal_time:.4f}s\n')
 
-    return total_time, traversal_times
+    # Stop the program if the traversal time is not zero
+    if traversal_time :
+        logging.shutdown()
+        for node in nodes:
+            node.socket.close()
+        sys.exit()
+
 
 if __name__ == "__main__":
-    try:
-        # Create network
-        num_nodes = NUM_NODES
-        message = "This is a longer message!"
-        network, peers = create_network(num_nodes)
-
-        # Create routing table
-        routing_table = create_routing_table(network)
-
-        # Log routing table
-        logger.info("Routing Table:")
-        for source_node, dest_data in routing_table.items():
-            logger.info(f"{source_node}:")
-            for dest_node, data in dest_data.items():
-                logger.info(
-                    f"    {dest_node}: {' -> '.join(data['path'])} (cost={data['cost']})"
-                )
-
-        # Start peers and discovery service
-        start_peers(peers)
-
-        # Send message and measure traversal time
-        start_node = peers[0]  # Choose the first node as the start node
-        target_nodes = peers[1:]  # All other nodes are the target nodes
-
-        traversal_time = send_message(start_node, target_nodes, message)[0]
-        logger.info(f"Total traversal time: {traversal_time:.6f}s")
-
-        # Shutdown the logging system
-        logging.shutdown()
-
-    finally:
-        print('flag')
-        # for node in peers:
-        #     node.socket.close()
-
-        # Shutdown the logging system
-        logging.shutdown()
+    run()

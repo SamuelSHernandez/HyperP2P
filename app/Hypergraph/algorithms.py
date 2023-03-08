@@ -1,7 +1,7 @@
 import heapq
 from typing import List
 
-from .graph import Graph
+from .graph import Graph, Node
 
 
 def shortest_path(graph: Graph, start: str, end: str) -> List[str]:
@@ -18,29 +18,43 @@ def shortest_path(graph: Graph, start: str, end: str) -> List[str]:
     :rtype: List[str]
     """
 
-    distances = {node.name: float("inf") for node in graph.nodes}
-    distances[start] = 0
-    queue = [(0, graph.get_node(start))]
-    predecessors = {node.name: None for node in graph.nodes}
+    # Set up distances and queue
+    nodes = graph.nodes
+    for node in nodes:
+        node.distance = float("inf")
+        node.predecessor = None
+    start_node = graph.get_node(start)
+    start_node.distance = 0
+    queue = {start_node: 0}  # Use a dictionary to track the queue
+
+    # Use a set to keep track of visited nodes
+    visited = set()
+
     while queue:
-        current_distance, current_node = heapq.heappop(queue)
-        if current_distance > distances[current_node.name]:
-            continue
+        current_node = min(queue, key=queue.get)
+        del queue[current_node]
+        visited.add(current_node)
+
         if current_node.name == end:
+            # Early exit if we've found the shortest path
             path = []
             while current_node is not None:
                 path.append(current_node.name)
-                current_node = graph.get_node(predecessors[current_node.name])
+                current_node = current_node.predecessor
             path.reverse()
             return path
+
         for edge in current_node.edges:
             for other_node in edge.nodes:
                 if other_node != current_node:
+                    if other_node in visited:
+                        continue
                     tentative_distance = (
-                        distances[current_node.name] + edge.weight / other_node.weight
+                        current_node.distance + edge.weight / other_node.weight
                     )
-                    if tentative_distance < distances[other_node.name]:
-                        distances[other_node.name] = tentative_distance
-                        predecessors[other_node.name] = current_node.name
-                        heapq.heappush(queue, (tentative_distance, other_node))
+                    if tentative_distance < other_node.distance:
+                        other_node.distance = tentative_distance
+                        other_node.predecessor = current_node
+                        queue[other_node] = other_node.distance
+
     return []

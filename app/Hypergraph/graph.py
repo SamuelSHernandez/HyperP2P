@@ -1,13 +1,9 @@
 import contextlib
 from typing import List, Set, Tuple, Union
 
+from ._exceptions import HyperedgeAlreadyExistsError, NodeAlreadyExistsError
 from .edge import Edge
-from .exceptions import HyperedgeAlreadyExistsError, NodeAlreadyExistsError
 from .node import Node
-
-"""
-This module provides a Graph class to represent a hypergraph.
-"""
 
 
 class Graph:

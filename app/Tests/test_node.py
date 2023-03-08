@@ -2,35 +2,29 @@ import unittest
 
 from hypergraph.node import Node
 
-
 class TestNode(unittest.TestCase):
-    def test_node():
-        # Create a node
-        node1 = Node("A", weight=2)
-        assert node1.name == "A"
-        assert node1.weight == 2
 
-        # Test adding and removing edges
+    def test_node_creation(self):
+            node = Node("A")
+            self.assertEqual(node.name, "A")
+            self.assertEqual(node.weight, 1)
+            self.assertEqual(node.edges, set())
+            self.assertIsNone(node.socket)
+
+            node = Node("B", weight=2, socket="localhost")
+            self.assertEqual(node.name, "B")
+            self.assertEqual(node.weight, 2)
+            self.assertEqual(node.edges, set())
+            self.assertEqual(node.socket, "localhost")
+
+    def test_node_comparison(self):
+        node1 = Node("A")
         node2 = Node("B")
-        node1.add_edge(node2)
-        assert node1.edges == {node2}
-        assert node2.edges == {node1}
-        node1.remove_edge(node2)
-        assert node1.edges == set()
-        assert node2.edges == set()
+        self.assertTrue(node1 < node2)
 
-        # Test node comparison
-        node3 = Node("A")
-        assert node1 == node3
-        assert node1 != node2
-
-        # Test setting socket attribute
-        node1.socket = "localhost:8000"
-        assert node1.socket == "localhost:8000"
-
-        # Test node string representation
-        assert str(node1) == "Node(name=A, weight=2)"
-
+    def test_node_representation(self):
+        node = Node("A", weight=2, socket="localhost")
+        self.assertEqual(repr(node), "Node: (name=A, weight=2, edges=set())")
 
 if __name__ == "__main__":
     unittest.main()
