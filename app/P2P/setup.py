@@ -153,11 +153,11 @@ def run():
     start_time = time.time()
     traversal_time = send_messages(nodes, message, logger, start_time)
     print(f'\nTraversal time: {traversal_time:.4f}s\n')
+    logging.shutdown()
+    for node in nodes:
+        node.socket.close()
 
     # Stop the program if the traversal time is not zero
-    if traversal_time :
-        logging.shutdown()
-        for node in nodes:
-            node.socket.close()
+    if traversal_time:
         sys.exit()
 
